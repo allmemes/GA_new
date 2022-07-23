@@ -20,58 +20,94 @@ from source import Source
 # from lf_geometry import WasteBoundary as WB
 import check_inbound as ci # new check inbound module
 import GA_matlab as GA # new matlab GA module
+from configparser import ConfigParser, ExtendedInterpolation
 
+
+# read with ini file
+configur = ConfigParser(interpolation=ExtendedInterpolation())
+configur.read('metaData.ini')
 
 #############
 # CONSTANTS
 #############
 
-R = 8.31446261815324  # universal gas law constant (J K^-1 mol^-1)
-T = 273.15 # temp (K)
-P = 101325 # standard atmosphere pressure (Pa) 
-M = 16.04 # molar mass of CH4 (g/mol)
-V = 22.414 # molar volume of CH4 @ 0C and 1 atm (L)
+R = float(configur.get('genetic algorithm', 'R'))
+T = float(configur.get('genetic algorithm', 'T'))
+P = float(configur.get('genetic algorithm', 'P'))
+M = float(configur.get('genetic algorithm', 'M'))
+V = float(configur.get('genetic algorithm', 'V'))
+
+# R = 8.31446261815324  # universal gas law constant (J K^-1 mol^-1)
+# T = 273.15 # temp (K)
+# P = 101325 # standard atmosphere pressure (Pa) 
+# M = 16.04 # molar mass of CH4 (g/mol)
+# V = 22.414 # molar volume of CH4 @ 0C and 1 atm (L)
+
+################################
+# Matlab version of GA VARIABLES
+################################
+
+inputMapJson = configur.get('genetic algorithm', 'inputMapJson')
+parent_percent = float(configur.get('genetic algorithm', 'parent_percent'))
+elite_percent = float(configur.get('genetic algorithm', 'elite_percent'))
+crossover_fraction = float(configur.get('genetic algorithm', 'crossover_fraction'))
+mutation_scale = float(configur.get('genetic algorithm', 'mutation_scale'))
+mutation_shrink = float(configur.get('genetic algorithm', 'mutation_shrink'))
+
+# inputMapJson = "result_Raster.json"
+# parent_percent = 0.75
+# elite_percent = 0.1
+# crossover_fraction = 0.8
+# mutation_scale = 6
+# mutation_shrink = 0.01
 
 
-#############
-# VARIABLES
-#############
+##################
+# Old GA VARIABLES
+##################
 
-# json file created from arcpy_preprocessing.py
-inputMapJson = "result_Raster.json"
-# new matlab GA variables
-parent_percent = 0.75
-elite_percent = 0.1
-crossover_fraction = 0.8
-mutation_scale = 6
-mutation_shrink = 0.01
-# mutation_linear_decrease_factor = 5
+cpu_count = int(configur.get('genetic algorithm', 'cpu_count'))
+incsv = configur.get('genetic algorithm', 'incsv')
+ch4_field = configur.get('genetic algorithm', 'ch4_field')
+wspeed_field = configur.get('genetic algorithm', 'wspeed_field')
+wspeed_units = configur.get('genetic algorithm', 'wspeed_units')
+wdir_field = configur.get('genetic algorithm', 'wdir_field')
+x_field = configur.get('genetic algorithm', 'x_field')
+y_field = configur.get('genetic algorithm', 'y_field')
+insolation = int(configur.get('genetic algorithm', 'insolation'))
+temp_c = float(configur.get('genetic algorithm', 'temp_c'))
+p_Pa = float(configur.get('genetic algorithm', 'p_Pa'))
+num_solution_sets = int(float(configur.get('genetic algorithm', 'num_solution_sets')))
+num_peaks = int(float(configur.get('genetic algorithm', 'num_peaks')))
+iterations = int(float(configur.get('genetic algorithm', 'iterations')))
 
-# old variables
-cpu_count = 3 # 3 is optimal until multiprocessing is reworked
-# incsv = r"test2_40x40_8_source_ins_1_temp_28_hPa_993_22.csv"
-incsv = "test_few.csv"
-ch4_field = "ppm"
-wspeed_field = "windspeed"
-wspeed_units = "Meters/Second"#"Miles/Hour" #"Meters/Second"
-wdir_field = "winddir" #"Wind Direction (direction of origin, geographic degrees)"
-x_field = "x"
-y_field = "y"
-insolation = 1
-temp_c = 28.0
-p_Pa = 99322
+speed = configur.get('genetic algorithm', 'speed')
+remove_zero_ppms = configur.getboolean('genetic algorithm', 'remove_zero_ppms')
+fixed_sources = configur.getboolean('genetic algorithm', 'fixed_sources')
 
-num_solution_sets = 50
-num_peaks = 3
-iterations = 500
-mutation_prob = 0.25
-mut = 2
-eliteSize = 10
-speed = "High"
-remove_zero_ppms = True
-fixed_sources = False
-    
- 
+# cpu_count = 3 # 3 is optimal until multiprocessing is reworked
+# incsv = "test_few.csv"
+# ch4_field = "ppm"
+# wspeed_field = "windspeed"
+# wspeed_units = "Meters/Second" #"Miles/Hour" #"Meters/Second"
+# wdir_field = "winddir" #"Wind Direction (direction of origin, geographic degrees)"
+# x_field = "x"
+# y_field = "y"
+# insolation = 1
+# temp_c = 28.0
+# p_Pa = 99322
+# num_solution_sets = 50
+# num_peaks = 3
+# iterations = 500
+
+# speed = "High"
+# remove_zero_ppms = True
+# fixed_sources = False
+# mutation_prob = 0.25
+# mut = 2
+# eliteSize = 10
+
+
 # change cwind_pos to dwind_pos
 def create_solution_csvs(df, best_fit_set):
     df.drop(columns=["u", "a", "stb1", "stb2", "stb3", "s", "c",
@@ -564,7 +600,6 @@ def precompute_source_parameters(source_array, df):
     -------
     lookup : TYPE
         DESCRIPTION.
-
     '''
     lookup = {}
     
@@ -734,13 +769,9 @@ def main():
             # 4, third offspring component: select mutation children from parent set
             mutation_size = num_solution_sets - elite_size - crossover_size
             mutation_child = GA.mutation(parent_set, mut_scale, mutation_size, map_info)
-            
             # matlab version of mutation scale decrease:
             mut_scale = mut_scale * (1 - mutation_shrink*((i+1)/iterations))
             
-            # linearly decreased mutation scale:
-            # mut_scale = mutation_linear_decrease_factor - (mutation_linear_decrease_factor / iterations) * (generation + 1)
-
             # 5, replace the old population with new generation.
             source_array = elite_child + crossover_child + mutation_child
 

@@ -1,5 +1,6 @@
 import arcpy
 import json
+from configparser import ConfigParser, ExtendedInterpolation
 
 def create_rasters_for_inbound_check(dataBase, inputPolygon, cell_size, bufferDistance, outputRasterName):
     arcpy.env.workspace = dataBase
@@ -109,16 +110,21 @@ def delete_raster(dataBase, rasterName):
 
 if __name__ == "__main__":
     # Demonstration: format of the input parameters. The arcgis related databases needs to be created in advance.
-    dataBase = r"\\engin-labs.m.storage.umich.edu\hangchen\windat.v2\Desktop\test\test.gdb"
-    inputPolygon = "boundary"
-    rasterName = "result_Raster"
-    cell_size = 1
+    # dataBase = r"C:\Users\15276\Internship_Gis\genetic_algorithm\genetic_algorithm.gdb"
+    # inputPolygon = "boundary"
+    # rasterName = "result_Raster"
+    # cell_size = 1
+    # bufferDistance = 50
 
-    # Note this buffferDistance is to avoid points being mutated to locations outisde the raster extent. This value
-    # is related to the mutation_scale in the genetic algorithm, where mutation scale refers to the standard deviation.
-    # This value refers to the maximum value that can be drawn from a normal distribution with 0 as mean and
-    # mutation_scale as the standard deviation.
-    bufferDistance = 50
+    configur = ConfigParser(interpolation=ExtendedInterpolation())
+    configur.read('metaData.ini')
+    dataBase = configur.get('arcpy preprocessing','dataBase')
+    inputPolygon = configur.get('arcpy preprocessing','inputPolygon')
+    rasterName = configur.get('arcpy preprocessing', 'rasterName')
+    cell_size = int(configur.get('arcpy preprocessing', 'cell_size'))
+    bufferDistance = configur.get('arcpy preprocessing', 'bufferDistance')
+
+    # print(dataBase, inputPolygon, rasterName, cell_size, bufferDistance)
 
     # preprocessing
     final_raster = create_rasters_for_inbound_check(dataBase, inputPolygon, cell_size, bufferDistance, rasterName)

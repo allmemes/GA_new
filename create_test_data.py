@@ -4,6 +4,7 @@ Created on Tue Sep 21 13:47:26 2021
 
 @author: BenJanevic
 """
+from logging import config
 import random
 import math
 import csv
@@ -11,9 +12,7 @@ import math
 import pandas as pd
 from matplotlib import pyplot
 import check_inbound as ci
-
-R = 8.31446261815324  # universal gas law constant (J K^-1 mol^-1)
-M = 16.04
+from configparser import ConfigParser, ExtendedInterpolation
 
 
 def calc_concentration(Q, u, σ_y, σ_z, y):
@@ -125,63 +124,49 @@ class Point:
     def __str__(self):
         return self.__repr__
 
-
-size = 40
-num_sources = 3
-gridsize = 20
-max_q = 25
-base_wind_dir = 45
-base_wind_speed = 2
-precision = 2
-jitter = 1
-
-insolation = 1
-temp_k = 273.15 + 28.00
-p_Pa = 99322
+# R = 8.31446261815324  # universal gas law constant (J K^-1 mol^-1)
+# M = 16.04
+# size = 40
+# gridsize = 20
+# max_q = 25
+# base_wind_dir = 45
+# base_wind_speed = 2
+# jitter = 1
 
 
-mapJson = "result_Raster.json"
+configur = ConfigParser(interpolation=ExtendedInterpolation())
+configur.read('metaData.ini')
+R = float(configur.get('genetic algorithm', 'R'))
+M = float(configur.get('genetic algorithm', 'M'))
+precision = int(configur.get('test', 'precision'))
+num_sources = int(configur.get('genetic algorithm', 'num_peaks'))
+insolation = int(configur.get('genetic algorithm', 'insolation'))
+temp_k = 273.15 + float(configur.get('genetic algorithm', 'temp_c'))
+p_Pa = float(configur.get('genetic algorithm', 'p_Pa'))
+outReceptors = configur.get('test', 'outReceptors')
+outSource = configur.get('test', 'outSource')
+inputCsv = configur.get('test', 'inputCsv')
+mapJson = configur.get('genetic algorithm', 'inputMapJson')
+
+
 mapInfo = ci.read_in_map_info(mapJson)
 allPointsWithin = ci.generate_all_points_within_polygon(mapInfo)
-
-# outfile = "test2_40x40_8_source_ins_1_temp_28_hPa_993_22.csv"
-# outSource = "Test_sources.csv"
-# inputCsv = ""
-
-outfile = "test_few.csv"
-outSource = "sources_few.csv"
-inputCsv = "receptors_few.csv"
-
-
 receptors = pd.read_csv(inputCsv)
+
 # random.seed(1)
 m = []
-# for i in range(size):
-#     m.append([None] * size)
-
-# for y, row in enumerate(m):
-#     for x, point in enumerate(row):
-#         m[y][x] = Point((x * gridsize + gridsize) + random.random() * jitter,
-#                         y * gridsize + gridsize + random.random() * jitter,
-#                         wind_dir=base_wind_dir + random.random() * 15,
-#                         wind_speed=base_wind_speed + random.random() * 1.5)
-
 for i, j, k, l in zip(receptors["X"], receptors["Y"], receptors["Direction"], receptors["Speed"]):
     m.append(Point(round(i,precision), round(j,precision), wind_dir=k, wind_speed=l))
 
 sources = []
-sources.append((274136.4234, 4684079.4117, 20000000))
-sources.append((274243.5788, 4684100.8972, 25000000))
-sources.append((274372.7636, 4684045.9597, 23000000))
-
-# for i in range(num_sources):
-#     source = random.choice(allPointsWithin)
-#     x = round(source[0], precision)
-#     y = round(source[1], precision)
-#     # x = round(random.uniform(0, gridsize * size), 2)
-#     # y = round(random.uniform(0, gridsize * size), 2)
-    # q = round(random.random() * max_q * 1000000, precision)
-#     sources.append((x, y, q))
+for i in range(num_sources):
+    source = random.choice(allPointsWithin)
+    x = round(source[0], precision)
+    y = round(source[1], precision)
+    # x = round(random.uniform(0, gridsize * size), 2)
+    # y = round(random.uniform(0, gridsize * size), 2)
+    q = round(random.random() * 25000000, precision)
+    sources.append((x, y, q))
 
 # for row in m:
 #     for r in row:
@@ -226,7 +211,7 @@ xs = []
 ys = []
 ppms = []
 
-with open(outfile, 'w', newline='') as csvfile:
+with open(outReceptors, 'w', newline='') as csvfile:
     csvwriter = csv.writer(csvfile)
     
     csvwriter.writerow(["x", "y", "ppm", "windspeed", "winddir", "is_source", "Q", "Alongwind", "Crosswind"])
@@ -242,7 +227,7 @@ with open(outfile, 'w', newline='') as csvfile:
     #         ppms.append(ppm)
 
     for p in m:
-        csvwriter.writerow([p.x, p.y, p.ppm, p.wind_speed, p.wind_dir, p.is_source, p.q, p.downwind, p.crosswind])
+        csvwriter.writerow([p.x, p.y, round(p.ppm, precision), p.wind_speed, p.wind_dir, p.is_source, p.q, p.downwind, p.crosswind])
         xs.append(p.x)
         ys.append(p.y)
         ppm = p.ppm

@@ -6,6 +6,7 @@ import numpy as np
 from GA_matlab import *
 import multiprocessing
 import time
+from configparser import ConfigParser, ExtendedInterpolation
 
 R = 8.31446261815324  # universal gas law constant (J K^-1 mol^-1)
 T = 273.15 # temp (K)
@@ -152,12 +153,12 @@ if __name__ == "__main__":
     # receptor5 = (0,-4)
     # test(source5, receptor5, 225)
      
-    print(ppm_to_ugm3(1, M, T, P))
-    print(ppmConversion(1, M ,T, P))
-    print(ppm_to_ugm3(0.3, 46, T, P))
-    print(ppmConversion(0.3, 46, T, P))
-    print(ppm_to_ugm3(1, 64.07, T, P))
-    print(ppmConversion(1, 64.07, T, P))
+    # print(ppm_to_ugm3(1, M, T, P))
+    # print(ppmConversion(1, M ,T, P))
+    # print(ppm_to_ugm3(0.3, 46, T, P))
+    # print(ppmConversion(0.3, 46, T, P))
+    # print(ppm_to_ugm3(1, 64.07, T, P))
+    # print(ppmConversion(1, 64.07, T, P))
 
     # listA = [[1,1,1,1,1,1,1,1,2,2,3,3,3,3,3,3,3,3,3,0,0,0],
     #            [1,1,2,2,2,2,2,2,3,3,3,3,3,3,3,3,0,0,0,0,0,0],
@@ -193,10 +194,9 @@ if __name__ == "__main__":
     #     print(check_in_polygon(mapList, source_all_in, lowerLeftX, upperRightY, cellSize))
 
  
-    scale = 5
-    c = 5
-    b = 0.01
-    iteration = 500
+    scale = 6
+    b = 0.0018
+    iteration = 2000
     
     # for i in range(1500):
     #     print(scale)
@@ -220,4 +220,12 @@ if __name__ == "__main__":
     #     start = time.time()
     #     time.sleep(2)
     #     print(calc_time_remaining(start, 100, i, i))
+    
+    # linearly decreased mutation scale:
+    # mut_scale = mutation_linear_decrease_factor - (mutation_linear_decrease_factor / iterations) * (generation + 1)
+
+    # configur = ConfigParser(interpolation=ExtendedInterpolation())
+    # configur.read('metaData.ini')
+    # value = configur.get('genetic algorithm global constant','inputMapJson')
+    # print(value)
 
