@@ -66,6 +66,8 @@ mutation_shrink = float(configur.get('genetic algorithm', 'mutation_shrink'))
 # Old GA VARIABLES
 ##################
 
+sources_afterGA = configur.get('genetic algorithm', 'sources_afterGA')
+receptors_afterGA = configur.get('genetic algorithm', 'receptors_afterGA')
 cpu_count = int(configur.get('genetic algorithm', 'cpu_count'))
 incsv = configur.get('genetic algorithm', 'incsv')
 ch4_field = configur.get('genetic algorithm', 'ch4_field')
@@ -114,9 +116,9 @@ def create_solution_csvs(df, best_fit_set):
                           "x2", "y2", "crosswind", "downwind", "dwind_pos",
                           "o_y", "o_z"], inplace=True, errors="ignore")
     df.rename(columns={"pred_ch4": "Predicted CH4 (ppm)", "stability": "Stability Class"}, inplace=True)
-    df.to_csv("solution.csv")
+    df.to_csv(receptors_afterGA)
     
-    with open("solution_sources.csv", 'w', newline='') as csvfile: 
+    with open(sources_afterGA, 'w', newline='') as csvfile: 
         writer = csv.writer(csvfile)
         
         writer.writerow(["ID", x_field, y_field, "Q (g/s)", "Error"])
